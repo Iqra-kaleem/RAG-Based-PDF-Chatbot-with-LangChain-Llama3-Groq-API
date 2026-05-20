@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 from langchain_groq import ChatGroq
-from langchain_openai import OpenAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
@@ -19,7 +19,7 @@ groq_api_key = os.getenv('GROQ_API_KEY')
 
 st.title("RagBot with Llama3")
 
-llm=ChatGroq(model="Llama3-8b-8192")
+llm=ChatGroq(model="llama-3.1-8b-instant")
 
 prompt=ChatPromptTemplate.from_template(
 """
@@ -35,14 +35,14 @@ Question: {input}
 
 def vector_embedding():
 
-    if "vector" not in st.session_state:
+    if "vectors" not in st.session_state:
     
-     st.session_state.embeddings= OpenAIEmbeddings()
+     st.session_state.embeddings= HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2") ##Embeddings
      st.session_state.loader= PyPDFDirectoryLoader("./Data") ##Data Ingestion
      st.session_state.docs=st.session_state.loader.load() ##Document Loading
      st.session_state.text_splitter= RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200) ##Chunk Creation
      st.session_state.final_documents=st.session_state.text_splitter.split_documents(st.session_state.docs) ##Splitting
-     st.session_state.vector= FAISS.from_documents(st.session_state.final_documents, st.session_state.embeddings) ##vector openai embeddings
+     st.session_state.vectors= FAISS.from_documents(st.session_state.final_documents, st.session_state.embeddings) ##vector openai embeddings
 
 
 
@@ -55,20 +55,22 @@ if st.button("Documents Embedding"):
 
 import time
 
-document_chain= create_stuff_documents_chain(llm,prompt)
-retriever= st.session_state.vectors.as_retriever()
-retrieval_chain=create_retrieval_chain(retriever, document_chain)
+if "vectors" in st.session_state:
+    document_chain= create_stuff_documents_chain(llm,prompt)
+    retriever= st.session_state.vectors.as_retriever()
+    retrieval_chain=create_retrieval_chain(retriever, document_chain)
 
-if prompt1:
-   start=time.process_time()
-   response= retrieval_chain.invoke({'input':prompt1})
-   print("Response time:",time.process_time()-start)
-   st.write(response['answer'])
+    if prompt1:
+  
+      start=time.process_time()
+      response= retrieval_chain.invoke({'input':prompt1})
+      print("Response time:",time.process_time()-start)
+      st.write(response['answer'])
 
-   # with a streamlit expander
-   with st.expander("Document Similarity Search"):
+      # with a streamlit expander
+      with st.expander("Document Similarity Search"):
       # find the relevant chunks
-      for i , doc in enumerate(response["context"]):
+        for i , doc in enumerate(response["context"]):
          st.write(doc.page_content)
          st.write("-----------------------")
 

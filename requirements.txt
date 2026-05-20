@@ -7,3 +7,6 @@ python-dotenv
 ollama
 beautifulsoup4
 sentence-transformers
+langchain-openai
+openai
+pypdf
