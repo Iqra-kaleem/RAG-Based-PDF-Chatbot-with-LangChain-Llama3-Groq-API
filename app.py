@@ -14,5 +14,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 ## load the groq and openai api key
-os.environ['OPENAI_API_KEY']=os.getenv("OPENAI_API_KEY")
-groq_api_key=os.getenv('GROQ_API_KEY')
+openai_api_key = os.getenv("OPENAI_API_KEY")
+groq_api_key = os.getenv('GROQ_API_KEY')
+
+st.title("RagBot with Llama3")
+
+llm=ChatGroq(model="Llama3-8b-8192")
+
+prompt=ChatPromptTemplate.from_template(
+"""
+Answer the question based on the provided context only.
+Please provide the most accurate response based on the question
+<context>
+{context}
+</context>
+Question: {input}
+
+"""    
+)
